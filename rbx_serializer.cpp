@@ -476,14 +476,6 @@ namespace Celery
 				lua_close(L);
 				return "";
 			}
-
-			// Deserializing is more involved than decompiling.
-			// but Decompile can be done without
-			// any offsets, just like Serializing
-			std::string Decompile(std::ostringstream& bcode)
-			{
-
-			}
 		}
 
 
