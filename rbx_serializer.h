@@ -40,7 +40,6 @@ namespace Celery
 			void getProtos(Proto*, std::vector<Proto*>& prototable);
 			std::string load(lua_State*, Proto*);
 			std::string Serialize(std::string source);
-			std::string Decompile(std::ostringstream& source);
 		}
 	}
 }
