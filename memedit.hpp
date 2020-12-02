@@ -1,7 +1,7 @@
 #pragma once
 #include "dx86.hpp"
 
-enum rel32 : uint8_t
+const enum rel32 : uint8_t
 {
     opc_call = 0xE8,
     opc_jmp = 0xE9,
@@ -10,8 +10,11 @@ enum rel32 : uint8_t
 // determines whether to go backwards (decrementing)
 // or forwards (incrementing) in memory to reach the
 // 
-enum direction { behind, next };
-
+const enum direction 
+{ 
+    behind, 
+    next 
+};
 
 // returns whether or not the address is the
 // beginning of a function (a common prologue)
