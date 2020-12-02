@@ -370,8 +370,8 @@ void memscan::scan_xrefs(uintptr_t func)
 
 			for (size_t i = 0; i < page.RegionSize; i++)
 			{
-				if (bytes[i] == 0xE8 
-				 || bytes[i] == 0xE9
+				if (bytes[i] == 0xE8 // call rel32
+				 || bytes[i] == 0xE9 // jmp rel32
 				){
 					if (scan_at + i + 5 + *reinterpret_cast<uintptr_t*>(scan_at + i + 1) == func)
 					{
