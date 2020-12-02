@@ -177,9 +177,9 @@ void memcpy_safe_padded(void* destination, void* source, const size_t size)
         }
         #else
         _InterlockedCompareExchange64(
-             reinterpret_cast<ULONGLONG*>(destination), 
-            *reinterpret_cast<ULONGLONG*>(source_buffer), 
-            *reinterpret_cast<ULONGLONG*>(destination)
+             reinterpret_cast<uint64_t*>(destination), 
+            *reinterpret_cast<uint64_t*>(source_buffer),
+            *reinterpret_cast<uint64_t*>(destination)
         );
         #endif
     }
