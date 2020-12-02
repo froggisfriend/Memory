@@ -1,8 +1,11 @@
-#ifndef C_MEMEDIT
-#define C_MEMEDIT
+#pragma once
+#include "dx86.hpp"
 
-#include <Windows.h>
-#include <vector>
+enum rel32 : uint8_t
+{
+    opc_call = 0xE8,
+    opc_jmp = 0xE9,
+};
 
 // determines whether to go backwards (decrementing)
 // or forwards (incrementing) in memory to reach the
@@ -296,51 +299,64 @@ std::vector<vector_read_type> memread(uintptr_t address, size_t count)
 
 
 
-// Compare the uint8_ts contained in two uint8_t tables
-extern bool memcmp(const std::vector<uint8_t>& uint8_ts_a, const std::vector<uint8_t>& uint8_ts_b);
+// Compare the bytes contained in two uint8_t tables
+extern bool memcmp(const std::vector<uint8_t>& bytes_a, const std::vector<uint8_t>& bytes_b);
 
-// Compare the uint8_ts located at address with the uint8_t table
-extern bool memcmp(void* address, const std::vector<uint8_t>& uint8_ts);
+// Compare the bytes located at address with the uint8_t table
+extern bool memcmp(void* address, const std::vector<uint8_t>& bytes);
 
 // non-void-pointer memory location
-extern bool memcmp(uintptr_t address, const std::vector<uint8_t>& uint8_ts);
+extern bool memcmp(uintptr_t address, const std::vector<uint8_t>& bytes);
 
 
 
 // injects a jmp instruction at address, which jumps to function
 //
-template<size_t size>
-std::vector<uint8_t> memjmp(void* from, void* to)
+template<uint8_t opcode>
+std::vector<uint8_t> memplace(void* from, void* to)
 {
+    DWORD old, size = 0, hook_size = 4 + (sizeof(opcode) / sizeof(uint8_t));
+
+    while (size < hook_size)
+    {
+        size += disassembler::read(reinterpret_cast<uintptr_t>(from) + size).len;
+    }
+
     auto rel = (reinterpret_cast<uintptr_t>(to) - reinterpret_cast<uintptr_t>(from)) - 5;
     auto brel = reinterpret_cast<uint8_t*>(&rel);
 
-    std::vector<uint8_t> old_uint8_ts = memread<uint8_t>(from, size);
-    std::vector<uint8_t> uint8_ts = { 0xE9, brel[0], brel[1], brel[2], brel[3] };
+    std::vector<uint8_t> old_bytes = memread<uint8_t>(from, size);
+    std::vector<uint8_t> bytes = { opcode, brel[0], brel[1], brel[2], brel[3] };
 
-    for (size_t i = 0; i < size - 5; i++)
+    // fill remaining overwritten bytes with nops
+    for (size_t i = 0; i < size - hook_size; i++)
     {
-        uint8_ts.push_back(0x90);
+        bytes.push_back(0x90);
     }
 
-    DWORD old;
     VirtualProtect      (from, size, PAGE_EXECUTE_READWRITE, &old);
-    memcpy_safe_padded  (from, uint8_ts.data(), size);
+    memcpy_safe_padded  (from, bytes.data(), size);
     VirtualProtect      (from, size, old, &old);
 
     FlushInstructionCache(GetCurrentProcess(), from, size);
 
-    return old_uint8_ts;
+    return old_bytes;
 }
-
-
 
 // non-void-pointer memory location
 //
-template<size_t size>
-std::vector<uint8_t> memjmp(uintptr_t address, void* function)
+template<uint8_t opcode>
+std::vector<uint8_t> memplace(uintptr_t address, void* function)
 {
-    return memjmp<size>(reinterpret_cast<void*>(address), function);
+    return memplace<opcode>(reinterpret_cast<void*>(address), function);
+}
+
+// non-void-pointer function location
+//
+template<uint8_t opcode>
+std::vector<uint8_t> memplace(void* address, uintptr_t function)
+{
+    return memplace<opcode>(address, reinterpret_cast<void*>(function));
 }
 
 
@@ -348,11 +364,11 @@ std::vector<uint8_t> memjmp(uintptr_t address, void* function)
 // strictly non-void-pointer
 // 
 template<direction dir>
-uintptr_t find_aob(uintptr_t start, std::vector<uint8_t> uint8_ts)
+uintptr_t find_aob(uintptr_t start, std::vector<uint8_t> bytes)
 {
     uintptr_t at = start;
 
-    while (!memcmp(at, uint8_ts))
+    while (!memcmp(at, bytes))
     {
         switch (dir)
         {
@@ -368,6 +384,3 @@ uintptr_t find_aob(uintptr_t start, std::vector<uint8_t> uint8_ts)
     return at;
 }
 
-
-
-#endif
