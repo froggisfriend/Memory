@@ -283,11 +283,10 @@ namespace routine_mgr
 
 	void flush()
 	{
-		for (const auto& x : routines)
+		for (size_t i = routines.size() - 1; i >= 0; i--)
 		{
-			x->~routine();
+			delete routines[i];
+			routines.erase(routines.begin() + i);
 		}
-
-		routines.clear();
 	}
 }
