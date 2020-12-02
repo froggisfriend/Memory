@@ -278,9 +278,6 @@ namespace routine_mgr
 		
 		memcpy(reinterpret_cast<void*>(new_func), &data, at - data);
 
-		printf("%p\n", new_func);
-		system("pause");
-
 		return new_func;
 	}
 
