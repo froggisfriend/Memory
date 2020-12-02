@@ -1211,7 +1211,7 @@ namespace disassembler
 		base_module = *reinterpret_cast<HMODULE*>(__readfsdword(0x30) + 8) + 0x1000;
 
 		MEMORY_BASIC_INFORMATION page = { 0 };
-		VirtualQuery(reinterpret_cast<void*>(base_module), &page, sizeof(page));
+		VirtualQuery(base_module, &page, sizeof(page));
 
 		base_module_size = page.RegionSize;
 	}
@@ -1241,7 +1241,7 @@ namespace disassembler
 			base_module = *reinterpret_cast<HMODULE*>(__readfsdword(0x30) + 8) + 0x1000;
 
 			MEMORY_BASIC_INFORMATION page = { 0 };
-			VirtualQuery(reinterpret_cast<void*>(base_module), &page, sizeof(page));
+			VirtualQuery(base_module, &page, sizeof(page));
 
 			base_module_size = page.RegionSize;
 		}
@@ -1259,11 +1259,11 @@ namespace disassembler
 				// This will simply grab the base module's size 
 				// to make sure it's set
 				MEMORY_BASIC_INFORMATION mbi = { 0 };
-				VirtualQueryEx(handle, reinterpret_cast<void*>(_module), &mbi, sizeof(mbi));
+				VirtualQueryEx(handle, _module, &mbi, sizeof(mbi));
 
 				// Update the REQUIRED values
 				base_module = _module;
-				base_module_size = reinterpret_cast<size_t>(base_module) + mbi.RegionSize;
+				base_module_size = mbi.RegionSize;
 			}
 		}
 	}
