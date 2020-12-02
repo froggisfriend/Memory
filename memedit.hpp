@@ -318,17 +318,20 @@ extern bool memcmp(uintptr_t address, const std::vector<uint8_t>& bytes);
 template<uint8_t opcode>
 std::vector<uint8_t> memplace(void* from, void* to)
 {
-    DWORD old, size = 0, hook_size = 4 + (sizeof(opcode) / sizeof(uint8_t));
+    const auto hook_size = 4 + (sizeof(opcode) / sizeof(uint8_t));
+
+    DWORD old;
+    size_t size = 0;
 
     while (size < hook_size)
     {
         size += disassembler::read(reinterpret_cast<uintptr_t>(from) + size).len;
     }
 
-    auto rel = (reinterpret_cast<uintptr_t>(to) - reinterpret_cast<uintptr_t>(from)) - 5;
+    const auto old_bytes = memread<uint8_t>(from, size);
+    auto rel = reinterpret_cast<int>(to) - (reinterpret_cast<int>(from) + hook_size);
     auto brel = reinterpret_cast<uint8_t*>(&rel);
 
-    std::vector<uint8_t> old_bytes = memread<uint8_t>(from, size);
     std::vector<uint8_t> bytes = { opcode, brel[0], brel[1], brel[2], brel[3] };
 
     // fill remaining overwritten bytes with nops
@@ -337,11 +340,11 @@ std::vector<uint8_t> memplace(void* from, void* to)
         bytes.push_back(0x90);
     }
 
-    VirtualProtect      (from, size, PAGE_EXECUTE_READWRITE, &old);
-    memcpy_safe_padded  (from, bytes.data(), size);
-    VirtualProtect      (from, size, old, &old);
+    VirtualProtect          (from, size, PAGE_EXECUTE_READWRITE, &old);
+    memcpy_safe_padded      (from, bytes.data(), bytes.size());
+    VirtualProtect          (from, size, old, &old);
 
-    FlushInstructionCache(GetCurrentProcess(), from, size);
+    FlushInstructionCache   (GetCurrentProcess(), from, size);
 
     return old_bytes;
 }
@@ -354,14 +357,13 @@ std::vector<uint8_t> memplace(uintptr_t address, void* function)
     return memplace<opcode>(reinterpret_cast<void*>(address), function);
 }
 
-// non-void-pointer function location
+// non-void-pointer function
 //
 template<uint8_t opcode>
 std::vector<uint8_t> memplace(void* address, uintptr_t function)
 {
     return memplace<opcode>(address, reinterpret_cast<void*>(function));
 }
-
 
 
 // strictly non-void-pointer
