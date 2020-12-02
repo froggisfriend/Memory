@@ -1,10 +1,10 @@
 #pragma once
 #include "dx86.hpp"
 
-const enum rel32 : uint8_t
+const enum : uint8_t
 {
-    opc_call = 0xE8,
-    opc_jmp = 0xE9,
+    rel_call = 0xE8,
+    rel_jmp = 0xE9,
 };
 
 // determines whether to go backwards (decrementing)
