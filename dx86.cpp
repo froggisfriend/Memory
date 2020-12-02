@@ -1214,10 +1214,10 @@ namespace disassembler
 		// module's size (needed for certain operations)
 		if (handle == GetCurrentProcess())
 		{
-			base_module = *reinterpret_cast<HMODULE*>(__readfsdword(0x30) + 8);
+			base_module = *reinterpret_cast<HMODULE*>(__readfsdword(0x30) + 8) + 0x1000;
 
 			MEMORY_BASIC_INFORMATION mbi = { 0 };
-			VirtualQuery(reinterpret_cast<void*>(base_module + 4096), &mbi, sizeof(mbi));
+			VirtualQuery(reinterpret_cast<void*>(base_module), &mbi, sizeof(mbi));
 
 			base_module_size = reinterpret_cast<size_t>(base_module) + mbi.RegionSize;
 		}
@@ -1245,10 +1245,10 @@ namespace disassembler
 		// module's size (needed for certain operations)
 		if (handle == GetCurrentProcess())
 		{
-			base_module = *reinterpret_cast<HMODULE*>(__readfsdword(0x30) + 8);
+			base_module = *reinterpret_cast<HMODULE*>(__readfsdword(0x30) + 8) + 0x1000;
 
 			MEMORY_BASIC_INFORMATION mbi = { 0 };
-			VirtualQuery(reinterpret_cast<void*>(base_module + 4096), &mbi, sizeof(mbi));
+			VirtualQuery(reinterpret_cast<void*>(base_module), &mbi, sizeof(mbi));
 
 			base_module_size = reinterpret_cast<size_t>(base_module) + mbi.RegionSize;
 		}
@@ -1266,7 +1266,7 @@ namespace disassembler
 				// This will simply grab the base module's size 
 				// to make sure it's set
 				MEMORY_BASIC_INFORMATION mbi = { 0 };
-				VirtualQueryEx(handle, reinterpret_cast<void*>(_module + 4096), &mbi, sizeof(mbi));
+				VirtualQueryEx(handle, reinterpret_cast<void*>(_module), &mbi, sizeof(mbi));
 
 				// Update the REQUIRED values
 				base_module = _module;
