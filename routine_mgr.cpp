@@ -21,6 +21,7 @@ namespace routine_mgr
 		args_count = 0;
 		old_function = 0;
 		new_function = 0;
+		routines.push_back(this);
 	}
 
 	routine::routine(uintptr_t address, size_t n_args)
@@ -28,6 +29,7 @@ namespace routine_mgr
 		args_count = n_args;
 		old_function = address;
 		new_function = 0;
+		routines.push_back(this);
 	}
 
 	routine::~routine()
@@ -40,10 +42,7 @@ namespace routine_mgr
 
 	uintptr_t routine::create()
 	{
-		printf("Creating routine...\n");
 		new_function = create_routine(old_function, args_count);
-		routines.push_back(this);
-		printf("Appended to routines list\n");
 		return new_function;
 	}
 
