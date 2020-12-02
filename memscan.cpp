@@ -75,8 +75,8 @@ memscan::memscan()
 	pattern_size = 0;
     mask = nullptr;
 
-	scan_start = *reinterpret_cast<uintptr_t*>(__readfsdword(0x30) + 8);
-    scan_end = scan_start + get_region(scan_start + 0x1000).RegionSize;
+	scan_start = *reinterpret_cast<uintptr_t*>(__readfsdword(0x30) + 8) + 0x1000;
+    scan_end = scan_start + get_region(scan_start).RegionSize;
 	scan_at = 0;
 
 	align = 1;
