@@ -182,7 +182,7 @@ namespace routine_mgr
 			}
 
 			data[size++] = 0xE8; // call func
-			*reinterpret_cast<uintptr_t*>(data + size, func - (new_func + size + 4));
+			*reinterpret_cast<uintptr_t*>(data + size) = func - (new_func + size + 4);
 			size += 4;
 
 			data[size++] = 0x83; // add esp, (n_args * 4)
@@ -201,7 +201,7 @@ namespace routine_mgr
 			}
 
 			data[size++] = 0xE8; // call func
-			*reinterpret_cast<uintptr_t*>(data + size, func - (new_func + size + 4));
+			*reinterpret_cast<uintptr_t*>(data + size) = func - (new_func + size + 4);
 			size += 4;
 
 			break;
@@ -222,7 +222,7 @@ namespace routine_mgr
 			data[size++] = 0x08;
 
 			data[size++] = 0xE8; // call func
-			*reinterpret_cast<uintptr_t*>(data + size, func - (new_func + size + 4));
+			*reinterpret_cast<uintptr_t*>(data + size) = func - (new_func + size + 4);
 			size += 4;
 
 			data[size++] = 0x59; // pop ecx
@@ -250,7 +250,7 @@ namespace routine_mgr
 			data[size++] = 0x0C;
 
 			data[size++] = 0xE8; // call func
-			*reinterpret_cast<uintptr_t*>(data + size, func - (new_func + size + 4));
+			*reinterpret_cast<uintptr_t*>(data + size, func) = (new_func + size + 4);
 			size += 4;
 
 			data[size++] = 0x59; // pop ecx
