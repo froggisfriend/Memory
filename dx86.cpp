@@ -1208,19 +1208,12 @@ namespace disassembler
 
 		external_mode = false;
 		current_proc = handle;
+		base_module = *reinterpret_cast<HMODULE*>(__readfsdword(0x30) + 8) + 0x1000;
 
-		// DLL-mode? we're reading from the current process
-		// so let's just grab the base module and the base
-		// module's size (needed for certain operations)
-		if (handle == GetCurrentProcess())
-		{
-			base_module = *reinterpret_cast<HMODULE*>(__readfsdword(0x30) + 8) + 0x1000;
+		MEMORY_BASIC_INFORMATION page = { 0 };
+		VirtualQuery(reinterpret_cast<void*>(base_module), &page, sizeof(page));
 
-			MEMORY_BASIC_INFORMATION mbi = { 0 };
-			VirtualQuery(reinterpret_cast<void*>(base_module), &mbi, sizeof(mbi));
-
-			base_module_size = reinterpret_cast<size_t>(base_module) + mbi.RegionSize;
-		}
+		base_module_size = page.RegionSize;
 	}
 
 	// Directly sets the current process handle
@@ -1247,10 +1240,10 @@ namespace disassembler
 		{
 			base_module = *reinterpret_cast<HMODULE*>(__readfsdword(0x30) + 8) + 0x1000;
 
-			MEMORY_BASIC_INFORMATION mbi = { 0 };
-			VirtualQuery(reinterpret_cast<void*>(base_module), &mbi, sizeof(mbi));
+			MEMORY_BASIC_INFORMATION page = { 0 };
+			VirtualQuery(reinterpret_cast<void*>(base_module), &page, sizeof(page));
 
-			base_module_size = reinterpret_cast<size_t>(base_module) + mbi.RegionSize;
+			base_module_size = page.RegionSize;
 		}
 		else
 		{
