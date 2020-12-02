@@ -142,7 +142,7 @@ void memscan::scan(const char* str_pattern, int endresult)
 	pattern = new uint8_t[pattern_size];
 	ZeroMemory(pattern, pattern_size);
 
-	mask = new char[pattern_size];
+	mask = new int8_t[pattern_size];
 	ZeroMemory(mask, pattern_size);
 
 	std::vector<int>wild_indices = {};
