@@ -36,7 +36,7 @@ namespace scanner
         int align;
         int pattern_size;
 
-        char* mask;
+        int8_t * mask;
         uint8_t* pattern;
     public:
         memscan();
