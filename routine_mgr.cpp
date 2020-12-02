@@ -40,8 +40,10 @@ namespace routine_mgr
 
 	uintptr_t routine::create()
 	{
+		printf("Creating routine...\n");
 		new_function = create_routine(old_function, args_count);
 		routines.push_back(this);
+		printf("Appended to routines list\n");
 		return new_function;
 	}
 
@@ -154,21 +156,27 @@ namespace routine_mgr
 
 	uintptr_t create_routine(uintptr_t func, size_t n_args)
 	{
-		size_t size = 0;
 		uint8_t data[128];
+		auto* at = data;
 
-		auto new_func = reinterpret_cast<uintptr_t>(VirtualAlloc(nullptr, 1024, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
-		if (new_func == NULL)
+		const auto new_func = reinterpret_cast<uintptr_t>(VirtualAlloc(nullptr, 1024, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+		if (!new_func)
 		{
 			printf("Error while allocating memory\n");
 			
 			return func;
 		}
 
-		data[size++] = 0x55; // push ebp
+		// if manually appending x86 byte values
+		// looks too ugly for you then why dont you
+		// grab an 8000 line assembling kit and
+		// make it look as pretty as you like ;)
+		// 
 
-		data[size++] = 0x8B; // mov ebp,esp
-		data[size++] = 0xEC;
+		*at++ = 0x55; // push ebp
+
+		*at++ = 0x8B; // mov ebp,esp
+		*at++ = 0xEC;
 
 		switch (get_conv(func, n_args))
 		{ 
@@ -176,18 +184,18 @@ namespace routine_mgr
 		{
 			for (int i = (n_args * 4) + 8; i > 8; i -= 4)
 			{
-				data[size++] = 0xFF; // push [ebp+??]
-				data[size++] = 0x75;
-				data[size++] = i - 4;
+				*at++ = 0xFF; // push [ebp+??]
+				*at++ = 0x75;
+				*at++ = i - 4;
 			}
 
-			data[size++] = 0xE8; // call func
-			*reinterpret_cast<uintptr_t*>(data + size) = func - (new_func + size + 4);
-			size += 4;
+			*at++ = 0xE8;
+			*reinterpret_cast<uintptr_t*>(at) = func - (new_func + (at - data) + 4);
+			at += sizeof(uintptr_t);
 
-			data[size++] = 0x83; // add esp, (n_args * 4)
-			data[size++] = 0xC4;
-			data[size++] = n_args * 4;
+			*at++ = 0x83; // add esp, (n_args * 4)
+			*at++ = 0xC4;
+			*at++ = n_args * 4;
 
 			break;
 		}
@@ -195,80 +203,84 @@ namespace routine_mgr
 		{
 			for (int i = (n_args * 4) + 8; i > 8; i -= 4)
 			{
-				data[size++] = 0xFF; // push [ebp+??]
-				data[size++] = 0x75;
-				data[size++] = i - 4;
+				*at++ = 0xFF; // push [ebp+??]
+				*at++ = 0x75;
+				*at++ = i - 4;
 			}
 
-			data[size++] = 0xE8; // call func
-			*reinterpret_cast<uintptr_t*>(data + size) = func - (new_func + size + 4);
-			size += 4;
+			*at++ = 0xE8;
+			*reinterpret_cast<uintptr_t*>(at) = func - (new_func + (at - data) + 4);
+			at += sizeof(uintptr_t);
 
 			break;
 		}
 		case ___thiscall:
 		{
-			data[size++] = 0x51; // push ecx
+			*at++ = 0x51; // push ecx
 
 			for (int i = n_args; i > 1; i--)
 			{
-				data[size++] = 0xFF; // push [ebp+??]
-				data[size++] = 0x75;
-				data[size++] = (i + 1) * 4;
+				*at++ = 0xFF; // push [ebp+??]
+				*at++ = 0x75;
+				*at++ = (i + 1) * 4;
 			}
 
-			data[size++] = 0x8B; // mov ecx,[ebp+08]
-			data[size++] = 0x4D;
-			data[size++] = 0x08;
+			*at++ = 0x8B; // mov ecx,[ebp+08]
+			*at++ = 0x4D;
+			*at++ = 0x08;
 
-			data[size++] = 0xE8; // call func
-			*reinterpret_cast<uintptr_t*>(data + size) = func - (new_func + size + 4);
-			size += 4;
+			*at++ = 0xE8;
+			*reinterpret_cast<uintptr_t*>(at) = func - (new_func + (at - data) + 4);
+			at += sizeof(uintptr_t);
 
-			data[size++] = 0x59; // pop ecx
+			*at++ = 0x59; // pop ecx
 
 			break;
 		}
 		case ___fastcall:
 		{
-			data[size++] = 0x51; // push ecx
-			data[size++] = 0x52; // push edx
+			*at++ = 0x51; // push ecx
+			*at++ = 0x52; // push edx
 
 			for (int i = n_args; i > 2; i--)
 			{
-				data[size++] = 0xFF; // push [ebp+??]
-				data[size++] = 0x75;
-				data[size++] = (i + 1) * 4;
+				*at++ = 0xFF; // push [ebp+??]
+				*at++ = 0x75;
+				*at++ = (i + 1) * 4;
 			}
 
-			data[size++] = 0x8B; // mov ecx,[ebp+08]
-			data[size++] = 0x4D;
-			data[size++] = 0x08;
+			*at++ = 0x8B; // mov ecx,[ebp+08]
+			*at++ = 0x4D;
+			*at++ = 0x08;
 
-			data[size++] = 0x8B; // mov edx,[ebp+0C]
-			data[size++] = 0x55;
-			data[size++] = 0x0C;
+			*at++ = 0x8B; // mov edx,[ebp+0C]
+			*at++ = 0x55;
+			*at++ = 0x0C;
 
-			data[size++] = 0xE8; // call func
-			*reinterpret_cast<uintptr_t*>(data + size) = func - (new_func + size + 4);
-			size += 4;
-
-			data[size++] = 0x59; // pop ecx
-			data[size++] = 0x5A; // pop edx
+			*at++ = 0xE8;
+			*reinterpret_cast<uintptr_t*>(at) = func - (new_func + (at - data) + 4);
+			at += sizeof(uintptr_t);
+			
+			*at++ = 0x59; // pop ecx
+			*at++ = 0x5A; // pop edx
 
 			break;
 		}
 		}
 
-		data[size++] = 0x5D; // pop ebp
-		data[size++] = 0xC3; // retn
+		*at++ = 0x5D; // pop ebp
+		*at++ = 0xC3; // retn
 		
-		// if we wanted to convert to __stdcall...
-		//data[size++] = 0xC2; // ret xx
-		//data[size++] = n_args * 4;
-		//data[size++] = 0x00;
+		// if wanting to convert to __stdcall
+		// 
+		//*at++ = 0xC2; // ret xx
+		//*at++ = n_args * 4;
+		//*at++ = 0x00;
 		
-		memcpy(reinterpret_cast<void*>(new_func), &data, size);
+		memcpy(reinterpret_cast<void*>(new_func), &data, at - data);
+
+		printf("%p\n", new_func);
+		system("pause");
 
 		return new_func;
 	}
