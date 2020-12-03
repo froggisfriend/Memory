@@ -1,14 +1,15 @@
 #pragma once
 #include "dx86.hpp"
 
-const enum : uint8_t
-{
-    rel_call = 0xE8,
-    rel_jmp = 0xE9,
-};
+// used to determine what relative instruction
+// to place, when using 'memplace'
+// 
+constexpr auto rel_call = 0xE8;
+constexpr auto rel_jmp = 0xE9;
 
 // determines whether to go backwards (decrementing)
 // or forwards (incrementing) in memory to reach the
+// destination
 // 
 const enum direction 
 { 
