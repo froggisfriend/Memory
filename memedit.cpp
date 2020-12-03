@@ -2,28 +2,28 @@
 
 bool is_function(uintptr_t address)
 {
-    const auto uint8_ts = memread<uint8_t>(address, 3);
+    const auto bytes = memread<uint8_t>(address, 3);
 
     // DLL export prologue...
     // some games dynamically allocate their own
     // copies of these functions, and they're not
     // 16-uint8_t aligned.
     // 
-    if (memcmp(uint8_ts, { 0x8B, 0xFF, 0x55 }))
-        return 1;
+    if (memcmp(bytes, { 0x8B, 0xFF, 0x55 }))
+        return true;
 
     if (address % 0x10 != 0)
-        return 0;
+        return false;
 
     // run through the most common prologues
     // 
     if (
-        memcmp(uint8_ts, { 0x53, 0x8B, 0xDC }) // push ebx  |  mov ebx, esp
-     || memcmp(uint8_ts, { 0x55, 0x8B, 0xEC }) // push ebp  |  mov ebp, esp
-     || memcmp(uint8_ts, { 0x56, 0x8B, 0xF4 }) // push esi  |  mov esi, esp
-     || memcmp(uint8_ts, { 0x57, 0x8B, 0xFC }) // push edi  |  mov edi, esp
+        memcmp(bytes, { 0x53, 0x8B, 0xDC }) // push ebx  |  mov ebx, esp
+     || memcmp(bytes, { 0x55, 0x8B, 0xEC }) // push ebp  |  mov ebp, esp
+     || memcmp(bytes, { 0x56, 0x8B, 0xF4 }) // push esi  |  mov esi, esp
+     || memcmp(bytes, { 0x57, 0x8B, 0xFC }) // push edi  |  mov edi, esp
     ){ 
-        return 1;
+        return true;
     }
 
     // Was the previous uint8_t an align?
@@ -31,10 +31,10 @@ bool is_function(uintptr_t address)
     // 
     if (*reinterpret_cast<uint8_t*>(address - 1) == 0xCC)
     {
-        return 1;
+        return true;
     }
     
-    return 0;
+    return false;
 }
 
 
@@ -155,7 +155,7 @@ void memcpy_safe_padded(void* destination, void* source, const size_t size)
 
     if (size <= 8)
     {
-        // Pad the source buffer with uint8_ts from destination
+        // Pad the source buffer with bytes from destination
         memcpy(source_buffer, destination, 8);
         memcpy(source_buffer, source, size);
 
@@ -185,18 +185,18 @@ void memcpy_safe_padded(void* destination, void* source, const size_t size)
     }
 }
 
-bool memcmp(const std::vector<uint8_t>& uint8_ts_a, const std::vector<uint8_t>& uint8_ts_b)
+bool memcmp(const std::vector<uint8_t>& bytes_a, const std::vector<uint8_t>& bytes_b)
 {
-    if (uint8_ts_a.size() != uint8_ts_b.size())
+    if (bytes_a.size() != bytes_b.size())
     {
         return false;
     }
 
     size_t count = 0;
 
-    for (const auto& uint8_t : uint8_ts_a)
+    for (const auto& uint8_t : bytes_a)
     {
-        if (uint8_ts_b[count] != uint8_t)
+        if (bytes_b[count] != uint8_t)
         {
             break;
         }
@@ -204,17 +204,17 @@ bool memcmp(const std::vector<uint8_t>& uint8_ts_a, const std::vector<uint8_t>& 
         count++;
     }
 
-    return count == uint8_ts_b.size();
+    return count == bytes_b.size();
 }
 
-bool memcmp(void* address, const std::vector<uint8_t>& uint8_ts_compare)
+bool memcmp(void* address, const std::vector<uint8_t>& bytes_compare)
 {
-    auto uint8_ts = memread<uint8_t>(address, uint8_ts_compare.size());
+    auto bytes = memread<uint8_t>(address, bytes_compare.size());
 
-    return memcmp(uint8_ts, uint8_ts_compare);
+    return memcmp(bytes, bytes_compare);
 }
 
-bool memcmp(uintptr_t address, const std::vector<uint8_t>& uint8_ts)
+bool memcmp(uintptr_t address, const std::vector<uint8_t>& bytes)
 {
-    return memcmp(reinterpret_cast<void*>(address), uint8_ts);
+    return memcmp(reinterpret_cast<void*>(address), bytes);
 }
