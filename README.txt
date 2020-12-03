@@ -26,8 +26,10 @@ a memory scan using memscan.hpp:
 // 
 auto functions_scan = new scanner::memscan();
 
-// use this ONLY if you're scanning a string
-// XREF or a pointer
+// align our scan, to go +4 at a time.
+// ONLY set this to 4 if you're scanning a
+// string XREF/pointer. Otherwise, it must
+// be set to 1 for generic AOB scans
 // 
 functions_scan->set_align(4);
 
