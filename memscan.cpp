@@ -10,7 +10,7 @@ static MEMORY_BASIC_INFORMATION get_region(uintptr_t location)
     return page;
 }
 
-static uint8_t to_byte(const char* str, int start_pos = 0)
+static uint8_t to_byte(const char* str, size_t start_pos = 0)
 {
 	char x[2];
 
