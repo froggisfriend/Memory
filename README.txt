@@ -44,7 +44,7 @@ auto results = functions_scan->get_results();
 auto first_xref = results.front(); // random spot in function where the string was used
 auto a_luaU_loadbuffer = get_prologue<behind>(first_xref); // get the beginning of the function
   
-delete functions_scan; // clean up our mess
+delete functions_scan;
 
 // display results
 printf("luaU_loadbuffer: %p\n", raslr(a_luaU_loadbuffer));
