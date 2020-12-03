@@ -41,8 +41,8 @@ functions_scan->set_align(4);
 functions_scan->scan_xrefs(": bytec", 1);
 
 auto results = functions_scan->get_results();
-auto first_xref = results.front(); // random spot in function where the string was used
-auto a_luaU_loadbuffer = get_prologue<behind>(first_xref); // get the beginning of the function
+auto first_xref = results.front(); /* get the first result, which is a random spot in a random function where the string was used ": bytec" was used. */
+auto a_luaU_loadbuffer = get_prologue<behind>(first_xref); /* get the beginning address of the function */
   
 delete functions_scan;
 
