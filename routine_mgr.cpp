@@ -283,13 +283,14 @@ namespace routine_mgr
 
 	void flush()
 	{
-		if (routines.size() > 0)
+		if (routines.size())
 		{
-			for (size_t i = routines.size() - 1; i >= 0; i--)
+			for (int i = routines.size() - 1; i >= 0; i--)
 			{
 				delete routines[i];
-				routines.erase(routines.begin() + i);
 			}
+
+			routines.clear();
 		}
 	}
 }
