@@ -24,7 +24,7 @@ namespace routine_mgr
 		routines.push_back(this);
 	}
 
-	routine::routine(uintptr_t address, size_t n_args)
+	routine::routine(uintptr_t address, const size_t n_args)
 	{
 		args_count = n_args;
 		old_function = address;
@@ -47,7 +47,7 @@ namespace routine_mgr
 	}
 
 
-	conv get_conv(uintptr_t func, size_t n_expected_args)
+	conv get_conv(uintptr_t func, const size_t n_expected_args)
 	{
 		// go to the very last epilogue of the function.
 		// This marks the absolute end of the function.
@@ -59,7 +59,7 @@ namespace routine_mgr
 			epilogue--;
 		}
 
-		conv convention = ___cdecl; // default
+		conv convention;
 
 		uintptr_t args = 0;
 		uintptr_t func_start = func;
@@ -153,7 +153,7 @@ namespace routine_mgr
 	}
 
 
-	uintptr_t create_routine(uintptr_t func, size_t n_args)
+	uintptr_t create_routine(uintptr_t func, const size_t n_args)
 	{
 		uint8_t data[128];
 		auto* at = data;
