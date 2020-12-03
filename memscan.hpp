@@ -33,8 +33,8 @@ namespace scanner
         uintptr_t scan_end;
         uintptr_t scan_at;
 
-        int align;
-        int pattern_size;
+        size_t align;
+        size_t pattern_size;
 
         int8_t * mask;
         uint8_t* pattern;
@@ -46,11 +46,10 @@ namespace scanner
 
         void add_check(scan_check);
         void set_scan(uintptr_t begin, uintptr_t end);
-        void set_align(int alignment);
+        void set_align(const size_t alignment);
 
-        void scan(const char* str_pattern, int endresult = 0);
-
-        void scan_xrefs(const char* str, int str_result = 1);
+        void scan(const char* str_pattern, const size_t end_result = 0);
+        void scan_xrefs(const char* str, const size_t str_result = 1);
         void scan_xrefs(uintptr_t func);
 
         scan_results get_results();
