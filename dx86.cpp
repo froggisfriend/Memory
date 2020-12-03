@@ -160,8 +160,9 @@ uint32_t longreg(uint8_t byte)
 
 namespace disassembler
 {
+	void* current_proc = nullptr;
 	HMODULE base_module = nullptr;
-	size_t base_module_size = NULL;
+	size_t base_module_size = 0;
 	bool external_mode = false;
 
 	operand::operand()
@@ -1156,19 +1157,15 @@ namespace disassembler
 		};
 	}
 
-	void* current_proc = nullptr;
-
-	uint8_t to_byte(std::string str, int offset)
+	const uint8_t to_byte(std::string str, const size_t offset)
 	{
-		uint8_t n = 0;
+		uint8_t b, n = 0;
 
 		if (str[offset] == '?' && str[offset + 1] == '?')
 			return n;
 
-		for (int i = offset; i < offset + 2; i++)
+		for (int i = offset; i < offset + 2; b = 0, i++)
 		{
-			uint8_t b = 0;
-
 			if (str[i] >= 0x61)
 				b = str[i] - 0x57;
 			else if (str[i] >= 0x41)
@@ -1186,7 +1183,7 @@ namespace disassembler
 		return n;
 	}
 
-	std::string to_str(uint8_t b)
+	std::string to_str(const uint8_t b)
 	{
 		std::string result = "";
 		char msg[8];
@@ -2052,7 +2049,7 @@ namespace disassembler
 		return p;
 	}
 
-	std::vector<disassembler::inst> read(uintptr_t address, int count)
+	std::vector<disassembler::inst> read(uintptr_t address, const size_t count)
 	{
 		uintptr_t at = address;
 		auto inst_list = std::vector<disassembler::inst>();
