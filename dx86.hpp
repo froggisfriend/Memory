@@ -4,7 +4,7 @@
 
 /* Made by static, 8/22/2020
  * If you modify, redistribute, or copy parts of this source code
- * I'd much appreciate leaving this comment in for credit
+ * I'd highly appreciate some credit.
 */
 
 #include <Windows.h>
@@ -266,7 +266,7 @@ namespace disassembler
 
 	extern void* current_proc;
 
-	extern void init(); // CALL THIS FIRST, UNLESS YOU USED `disassembler::open(...)`
+	extern void init(); // CALL THIS FIRST, UNLESS YOUVE USED 'disassembler::open(...)'
 	extern void flush(); // CALL THIS AT THE END OF THE PROGRAM
 	extern HMODULE get_base_module(HANDLE proc, std::wstring process_name);
 	extern void load();
@@ -274,11 +274,11 @@ namespace disassembler
 	extern void open(std::wstring process_name);
 	extern inst read(uintptr_t address);
 
-	extern std::vector<disassembler::inst> read(uintptr_t address, int count);
+	extern std::vector<disassembler::inst> read(uintptr_t address, const size_t count);
 	extern std::vector<disassembler::inst> read_range(uintptr_t address_from, uintptr_t address_to);
 
-	extern uint8_t to_byte(std::string, int offset = 0);
-	extern std::string to_str(uint8_t);
+	extern const uint8_t to_byte(std::string, const size_t offset = 0);
+	extern std::string to_str(const uint8_t);
 
 	extern OP_INFO* OP_TABLE;
 }
