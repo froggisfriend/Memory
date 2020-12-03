@@ -10,17 +10,17 @@ static MEMORY_BASIC_INFORMATION get_region(uintptr_t location)
     return page;
 }
 
-static uint8_t to_byte(const char* str, size_t start_pos = 0)
+// ugly code here but works efficiently
+//
+static uint8_t to_byte(const char* str, const size_t start_pos = 0)
 {
 	char x[2];
 
 	x[0] = str[start_pos];
-	x[1] = str[1 + start_pos];
+	x[1] = str[start_pos + 1];
 	
 	if (x[0] == '?' && x[1] == '?') // '??'
-	{
 		return 0;
-	}
 	else
 	{
 		int n = 0, id = 0, value = 0;
@@ -33,8 +33,7 @@ static uint8_t to_byte(const char* str, size_t start_pos = 0)
 		else if (x[id] >= 0x30)
 			n = x[id] - 0x30; // number chars
 	
-		switch(id)
-		{
+		switch(id) {
 			case 0:
 				id = 1;
 				value += (n * 16);
@@ -113,12 +112,12 @@ void memscan::set_scan(uintptr_t begin, uintptr_t end)
 	scan_end = end;
 }
 
-void memscan::set_align(int alignment)
+void memscan::set_align(const size_t alignment)
 {
     align = alignment;
 }
 
-void memscan::scan(const char* str_pattern, int endresult)
+void memscan::scan(const char* str_pattern, const size_t endresult)
 {
 	results_list.clear();
 	pattern_size = 0;
@@ -303,9 +302,11 @@ void memscan::scan(const char* str_pattern, int endresult)
 	delete[] mask;
 }
 
-void memscan::scan_xrefs(const char* str, int n_str_result)
+
+
+void memscan::scan_xrefs(const char* str, const size_t n_str_result)
 {
-	int len = strlen(str);
+	const int len = strlen(str);
 
 	// convert the string to bytes
 	char* str_aob = new char[1 + (len * 2)];
@@ -355,6 +356,7 @@ void memscan::scan_xrefs(const char* str, int n_str_result)
 	}
 }
 
+
 void memscan::scan_xrefs(uintptr_t func)
 {
 	results_list.clear();
@@ -366,6 +368,7 @@ void memscan::scan_xrefs(uintptr_t func)
 		if (page.Protect == PAGE_EXECUTE_READ)
 		{
 			uint8_t* bytes = new uint8_t[page.RegionSize];
+
 			memcpy(bytes, reinterpret_cast<void*>(scan_at), page.RegionSize);
 
 			for (size_t i = 0; i < page.RegionSize; i++)
@@ -386,6 +389,7 @@ void memscan::scan_xrefs(uintptr_t func)
 		scan_at = reinterpret_cast<uintptr_t>(page.BaseAddress) + page.RegionSize;
 	}
 }
+
 
 scan_results memscan::get_results()
 {
