@@ -10,43 +10,6 @@ static MEMORY_BASIC_INFORMATION get_region(uintptr_t location)
     return page;
 }
 
-// ugly code here but works efficiently
-//
-static uint8_t to_byte(const char* str, const size_t start_pos = 0)
-{
-	char x[2];
-
-	x[0] = str[start_pos];
-	x[1] = str[start_pos + 1];
-	
-	if (x[0] == '?' && x[1] == '?') // '??'
-		return 0;
-	else
-	{
-		int n = 0, id = 0, value = 0;
-
-	convert:
-		if (x[id] > 0x60)
-			n = x[id] - 0x57; // n = A-F (10-16)
-		else if (x[id] > 0x40)
-			n = x[id] - 0x37; // n = a-f (10-16)
-		else if (x[id] >= 0x30)
-			n = x[id] - 0x30; // number chars
-	
-		switch(id) {
-			case 0:
-				id = 1;
-				value += (n * 16);
-				goto convert;
-			case 1:
-				value += n;
-			break;
-		}
-
-		return value;
-	}
-}
-
 uint8_t* safe_bytes = nullptr;
 uintptr_t safe_loc = 0;
 uintptr_t safe_size = 0;
