@@ -9,7 +9,7 @@ namespace routine_mgr
 		size_t args_count;
 	public:
 		routine();
-		routine(uintptr_t, size_t);
+		routine(uintptr_t, const size_t);
 		~routine();
 
 		uintptr_t old_function;
@@ -19,7 +19,7 @@ namespace routine_mgr
 	};
 
 	// because cant define `cdecl`, or `_cdecl`...
-	enum conv : uint8_t
+	enum conv
 	{
 		___cdecl,
 		___stdcall,
@@ -27,8 +27,8 @@ namespace routine_mgr
 		___thiscall
 	};
 
-	extern conv get_conv(uintptr_t func, size_t n_expected_args);
-	extern uintptr_t create_routine(uintptr_t func, size_t n_args);
+	extern conv get_conv(uintptr_t func, const size_t n_expected_args);
+	extern uintptr_t create_routine(uintptr_t func, const size_t n_args);
 
 	extern std::vector<routine*>routines;
 	extern void flush(); // clean up any/all resources
