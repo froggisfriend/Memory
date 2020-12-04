@@ -2054,7 +2054,7 @@ namespace disassembler
 		uintptr_t at = address;
 		auto inst_list = std::vector<disassembler::inst>();
 
-		for (int c = 0; c < count; c++)
+		for (size_t c = 0; c < count; c++)
 		{
 			auto i = read(at);
 			inst_list.push_back(i);
