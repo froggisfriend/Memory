@@ -26,11 +26,13 @@ bool is_function(uintptr_t address)
         return true;
     }
 
-    // Was the previous uint8_t an align?
-    // this may be a naked function
+    // Was this followed by 16-byte alignment?
     // 
-    if (*reinterpret_cast<uint8_t*>(address - 1) == 0xCC)
-    {
+    if (
+        *reinterpret_cast<uint8_t*>(address - 1) == 0xCC
+     && *reinterpret_cast<uint8_t*>(address - 2) == 0xCC
+    ){
+        // This is a naked function
         return true;
     }
     
