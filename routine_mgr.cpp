@@ -3,9 +3,9 @@
 
 static bool is_code(uintptr_t address)
 {
-	if (*reinterpret_cast<uint64_t*>(address) == 0 
-	 && *reinterpret_cast<uint64_t*>(address + sizeof(uint64_t)) == 0
-	){
+	if (*reinterpret_cast<uint64_t*>(address) == 0
+		&& *reinterpret_cast<uint64_t*>(address + sizeof(uint64_t)) == 0
+		) {
 		return false;
 	}
 
@@ -59,6 +59,8 @@ namespace routine_mgr
 			epilogue--;
 		}
 
+		printf("%p\n", epilogue);
+
 		conv convention;
 
 		uintptr_t args = 0;
@@ -71,7 +73,7 @@ namespace routine_mgr
 		if (get_return(epilogue) > 0)
 		{
 			convention = ___stdcall;
-			func_end += 2;
+			func_end += 2; // go to the absolute endpoint of the function
 		}
 		else
 		{
@@ -162,7 +164,7 @@ namespace routine_mgr
 		if (!new_func)
 		{
 			printf("Error while allocating memory\n");
-			
+
 			return func;
 		}
 
@@ -178,7 +180,7 @@ namespace routine_mgr
 		*at++ = 0xEC;
 
 		switch (get_conv(func, n_args))
-		{ 
+		{
 		case ___cdecl:
 		{
 			for (int i = (n_args * 4) + 8; i > 8; i -= 4)
@@ -259,7 +261,7 @@ namespace routine_mgr
 			*at++ = 0xE8;
 			*reinterpret_cast<uintptr_t*>(at) = func - (new_func + (at - data) + 4);
 			at += sizeof(uintptr_t);
-			
+
 			*at++ = 0x59; // pop ecx
 			*at++ = 0x5A; // pop edx
 
@@ -269,13 +271,13 @@ namespace routine_mgr
 
 		*at++ = 0x5D; // pop ebp
 		*at++ = 0xC3; // retn
-		
+
 		// if wanting to convert to __stdcall
 		// 
 		//*at++ = 0xC2; // ret xx
 		//*at++ = n_args * 4;
 		//*at++ = 0x00;
-		
+
 		memcpy(reinterpret_cast<void*>(new_func), &data, at - data);
 
 		return new_func;
