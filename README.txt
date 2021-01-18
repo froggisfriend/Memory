@@ -44,6 +44,9 @@ This will initiate the disassembler for your DLL.
 Put it in your main function before any other API functions are used.
 
 
+
+---> memscan.hpp <---
+
 Without further ado,
 Here's an example of setting up and running
 a memory scan using memscan.hpp:
@@ -71,6 +74,68 @@ delete functions_scan;
 
 // display the result
 printf("luaU_loadbuffer: %p\n", raslr(a_luaU_loadbuffer));
+
+
+This is all it takes to scan for XREF's of a string.
+
+
+Now, a basic AOB scan is even simpler:
+
+auto functions_scan = new scanner::memscan();
+functions_scan->scan_xrefs("558BEC????8B????83????5D");
+
+auto results_list = functions_scan->get_results();
+
+delete functions_scan;
+
+
+Easy peasy
+
+
+
+---> routine_mgr.hpp <---
+
+This little API really analyses functions in memory.
+
+We have routine_mgr::get_conv, which takes the function's address,
+and the number of args that the function is expected to have.
+
+If the address is for lua_getfield, then the expected args is 3.
+If the address is for lua_pushvalue, then the expected args is 2.
+
+This will return an enum representing the correct calling convention
+for the function.
+
+This has a 100% accuracy rate in determining the convention,
+because of how it works.
+
+
+
+
+---> memedit.hpp <---
+
+Ah, the editing utility. My favorite part.
+
+This is packed with common api functions, but they have alot of different options.
+Let's say you want the beginning address of a function, starting at a random point inside of it:
+
+beginning = get_prologue<behind>(address);
+
+Let's say you want the next function in memory, starting at index2adr:
+
+next_function = get_prologue<next>(index2adr);
+
+You'll notice almost every function here uses a "direction"
+in the template, so you can navigate memory easily
+and do a number of operations.
+
+get_call<next>(address) <--- Goes to the next function being called in memory, starting at address
+get_call<behind>(address) <--- Goes to the previous function being called,  starting at address
+get_calls(address) <--- Returns all of the functions that are called inside of a function (address must be the function's prologue(start address))
+
+
+
+There will be more examples listed here
 
 
 
