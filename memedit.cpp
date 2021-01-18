@@ -80,8 +80,9 @@ uintptr_t is_call(uintptr_t address)
     return 0;
 }
 
-uint16_t get_return(uintptr_t address)
+uint32_t get_return(uintptr_t address)
 {
+    auto result = -1;
     auto bytes = memread<uint8_t>(address - 1, 2);
 
     uint8_t prev = bytes[0];
@@ -89,24 +90,26 @@ uint16_t get_return(uintptr_t address)
 
     // check if it's a common epilogue
     // 
-    if (
-        ep == 0xC2 // ret
-     || ep == 0xC3 // retn
-     || ep == 0xC9 // leave
-    ){
+    switch (ep)
+    {
+    case 0xC2: // ret
+    case 0xC3: // retn
+    case 0xC9: // leave
+
         // run through the most common registers
         // that a function is initialized with...
         // to be sure that this is the EOF
         // 
-        if (
-            prev == 0x5B // pop ebx
-         || prev == 0x5D // pop ebp
-         || prev == 0x5E // pop esi
-         || prev == 0x5F // pop edi
-        ){
-            switch (ep)
-            {
-            case 0xC2: // get the value from a 'ret' instruction
+        switch (prev)
+        {
+        case 0x5B: // pop ebx
+        case 0x5D: // pop ebp
+        case 0x5E: // pop esi
+        case 0x5F: // pop edi
+
+            printf("%02X, %02X, ", ep, prev);
+
+            if (ep == 0xC2)
             {
                 uint16_t r = memread<uint16_t>(address + 1);
 
@@ -114,16 +117,22 @@ uint16_t get_return(uintptr_t address)
                 // I guess
                 if (r % 4 == 0 && r < 1024)
                 {
-                    return r;
+                    result = r;
                 }
             }
-            default:
-                return 0;
+            else
+            {
+                result = 0;
             }
+
+            break;
         }
+
+        break;
     }
 
-    return -1;
+    printf("Returning %i\n", result);
+    return result;
 }
 
 
@@ -147,6 +156,60 @@ std::vector<uintptr_t> get_calls(uintptr_t func)
     }
 
     return calls;
+}
+
+
+// search through the function for all occurences 
+// where EBP is used with a POSITIVE offset, starting at 8.
+// This means it's an arg and we want to go all the way 
+// to the end, then see which offset was the HIGHEST.
+// Whatever the highest number is, this shows
+// how many args the function has altogether.
+// We just subtract 4 from it and then divide it by 4
+// (args start at +8, +C, +10, +14, and so on..*)
+// 
+// * this function will NOT work with 64 bit args
+// as they get handled much differently :[
+// 
+int get_arg_count(uintptr_t func)
+{
+    int count = 0;
+
+    for (auto& i : disassembler::read_range(func, get_prologue<next>(func)))
+    {
+        if (i.src().flags & OP_R32 && i.src().flags & OP_IMM8)
+        {
+            if (i.src().reg.front() == disassembler::R32_EBP)
+            {
+                auto temp = i.src().imm8; 
+                
+                if (temp % 4 == 0 && temp >= 8 && temp <= 0x7C)
+                {
+                    if (temp > count)
+                    {
+                        count = temp;
+                    }
+                }
+            }
+        }
+        else if (i.dest().flags & OP_R32 && i.dest().flags & OP_IMM8)
+        {
+            if (i.dest().reg.front() == disassembler::R32_EBP)
+            {
+                auto temp = i.dest().imm8;
+
+                if (temp % 4 == 0 && temp >= 8 && temp <= 0x7C)
+                {
+                    if (temp > count)
+                    {
+                        count = temp;
+                    }
+                }
+            }
+        }
+    }
+
+    return (count - 4) / 4;
 }
 
 
