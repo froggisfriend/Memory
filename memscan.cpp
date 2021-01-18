@@ -10,6 +10,18 @@ static MEMORY_BASIC_INFORMATION get_region(uintptr_t location)
     return page;
 }
 
+static uintptr_t get_section(const char* section)
+{
+	uintptr_t start = *reinterpret_cast<uintptr_t*>(__readfsdword(0x30) + 8);
+
+	while (!(memcmp(reinterpret_cast<void*>(start), section, strlen(section)) == 0))
+	{
+		start += 4;
+	}
+
+	return *reinterpret_cast<uintptr_t*>(start + 12);
+}
+
 uint8_t* safe_bytes = nullptr;
 uintptr_t safe_loc = 0;
 uintptr_t safe_size = 0;
@@ -38,10 +50,11 @@ memscan::memscan()
     mask = nullptr;
 
 	scan_start = *reinterpret_cast<uintptr_t*>(__readfsdword(0x30) + 8) + 0x1000;
-    scan_end = scan_start + get_region(scan_start).RegionSize;
+	scan_end = get_section(".rodata");
 	scan_at = 0;
-
 	align = 1;
+
+	printf("%p\n", scan_end);
 
 	results_list = {};
 	scan_checks = {};
@@ -286,7 +299,10 @@ void memscan::scan_xrefs(const char* str, const size_t n_str_result)
 		str_aob[at++] = c[1];
 	}
 
+	auto old_scan_start = scan_start;
+	scan_start += get_region(scan_start).RegionSize;
 	scan(str_aob, n_str_result);
+	scan_start = old_scan_start;
 
 	delete[] str_aob;
 
@@ -310,7 +326,7 @@ void memscan::scan_xrefs(const char* str, const size_t n_str_result)
 		// 
 		align = 1;
 
-		scan(str_pointer);
+		scan(str_pointer, 1);
 
 		align = old_align;
 	}
