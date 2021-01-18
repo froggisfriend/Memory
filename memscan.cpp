@@ -54,8 +54,6 @@ memscan::memscan()
 	scan_at = 0;
 	align = 1;
 
-	printf("%p\n", scan_end);
-
 	results_list = {};
 	scan_checks = {};
 }
