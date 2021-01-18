@@ -108,6 +108,11 @@ for the function.
 
 This has a 100% accuracy rate in determining the convention,
 because of how it works.
+There is no "guessing" the convention -- it returns exactly what it is.
+
+Obviously the down side to this is you need to enter the amount of args,
+But if the number of args change, you will
+need to update your exploit either way because you'll have issues.
 
 
 
