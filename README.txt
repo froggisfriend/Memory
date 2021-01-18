@@ -16,6 +16,13 @@ memedit.hpp
 routine_mgr.hpp
 
 
+You NEED To intiate the disassembler before you can use any library functions.
+Otherwise, it will break.
+Use disassembler::open(GetCurrentProcess());
+This will initiate the disassembler for your DLL.
+
+
+
 Here's an example of setting up and running
 a memory scan using memscan.hpp:
 
