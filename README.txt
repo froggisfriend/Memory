@@ -112,7 +112,7 @@ There is no "guessing" the convention -- it returns exactly what it is.
 
 Obviously the down side to this is you need to enter the amount of args,
 But if the number of args change, you will
-need to update your exploit either way because you'll have issues.
+need to update your exploit anyway because you'll have issues.
 
 
 
