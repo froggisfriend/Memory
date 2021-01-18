@@ -32,7 +32,7 @@ extern uintptr_t is_call(uintptr_t address);
 // Otherwise, it returns 0 for a retn
 // or it returns the value in a ret.
 // 
-extern uint16_t get_return(uintptr_t address);
+extern uint32_t get_return(uintptr_t address);
 
 
 // strictly non-void-pointer
@@ -156,6 +156,9 @@ uintptr_t get_call(uintptr_t start, uintptr_t func = 0)
 // and return them in a vector.
 // 
 std::vector<uintptr_t> get_calls(uintptr_t func);
+
+
+int get_arg_count(uintptr_t func);
 
 
 
@@ -319,7 +322,7 @@ extern bool memcmp(uintptr_t address, const std::vector<uint8_t>& bytes);
 template<uint8_t opcode>
 std::vector<uint8_t> memplace(void* from, void* to)
 {
-    const auto hook_size = 4 + (sizeof(opcode) / sizeof(uint8_t));
+    const auto hook_size = 5;
 
     DWORD old;
     size_t size = 0;
@@ -364,6 +367,13 @@ template<uint8_t opcode>
 std::vector<uint8_t> memplace(void* address, uintptr_t function)
 {
     return memplace<opcode>(address, reinterpret_cast<void*>(function));
+}
+// non-void-pointer function
+//
+template<uint8_t opcode>
+std::vector<uint8_t> memplace(uintptr_t address, uintptr_t function)
+{
+    return memplace<opcode>(reinterpret_cast<void*>(address), reinterpret_cast<void*>(function));
 }
 
 
