@@ -107,8 +107,6 @@ uint32_t get_return(uintptr_t address)
         case 0x5E: // pop esi
         case 0x5F: // pop edi
 
-            printf("%02X, %02X, ", ep, prev);
-
             if (ep == 0xC2)
             {
                 uint16_t r = memread<uint16_t>(address + 1);
@@ -131,7 +129,6 @@ uint32_t get_return(uintptr_t address)
         break;
     }
 
-    printf("Returning %i\n", result);
     return result;
 }
 
