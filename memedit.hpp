@@ -400,3 +400,254 @@ uintptr_t find_aob(uintptr_t start, std::vector<uint8_t> bytes)
     return at;
 }
 
+
+
+struct saved_detour
+{
+    uintptr_t address;
+    BYTE old_bytes[16];
+    size_t hook_size;
+};
+
+extern saved_detour create_detour(uintptr_t address, void* func);
+extern void remote_detour(saved_detour detour_data);
+
+
+// Quick assembling api
+// These append instructions to memory with ease
+
+// pushad
+#define memapp_pushad(at)\
+*at++ = 0x60;
+
+
+// popad
+#define memapp_popad(at)\
+*at++ = 0x61;
+
+
+// push r1
+#define memapp_push_r32(at, r1)\
+*at++ = 0x50 + r1;
+
+
+// pop r1
+#define memapp_pop_r32(at, r1)\
+*at++ = 0x58 + r1;
+
+
+// mov r1, r2
+#define memapp_mov_r32_r32(at, r1, r2)\
+*at++ = 0x8B;\
+*at++ = 0xC0 + (r1 * 8) + r2;
+
+
+// mov [r1], r2
+#define memapp_mov_rm_r32(at, r1, r2)\
+*at++ = 0x89;\
+*at++ = (r2 * 8) + r1;
+
+
+// mov r1, [r2]
+#define memapp_mov_r32_rm(at, r1, r2)\
+*at++ = 0x8B;\
+*at++ = (r1 * 8) + r2;
+
+
+// lea r1, [r2]
+#define memapp_lea_r32_rm(at, r1, r2)\
+*at++ = 0x8D;\
+*at++ = (r1 * 8) + r2;
+
+
+// mov [r1+??], eax
+#define memapp_mov_rm_off8_r32(at, r1, o, r2)\
+*at++ = 0x89;\
+*at++ = 0x40 + (r2 * 8) + r1;\
+*at++ = o;
+
+
+// mov r1, [r2+??]
+#define memapp_mov_r32_rm_off8(at, r1, r2, o)\
+*at++ = 0x8B;\
+*at++ = 0x40 + (r1 * 8) + r2;\
+*at++ = o;
+
+
+// lea r1, [r2+??]
+#define memapp_lea_r32_rm_off8(at, r1, r2, o)\
+*at++ = 0x8D;\
+*at++ = 0x40 + (r1 * 8) + r2;\
+*at++ = o;
+
+
+// mov [r1+????????], r2
+#define memapp_mov_rm_off32_r32(at, r1, o, r2)\
+*at++ = 0x89;\
+*at++ = 0x80 + (r2 * 8) + r1;\
+*reinterpret_cast<uint32_t*>(at) = o;\
+at += sizeof(uint32_t);
+
+
+// mov r1, [r2+????????]
+#define memapp_mov_r32_rm_off32(at, r1, r2, o)\
+*at++ = 0x8B;\
+*at++ = 0x80 + (r1 * 8) + r2;\
+*reinterpret_cast<uint32_t*>(at) = o;\
+at += sizeof(uint32_t);
+
+
+// lea r1, [r2+????????]
+#define memapp_lea_r32_rm_off32(at, r1, r2, o)\
+*at++ = 0x8D;\
+*at++ = 0x80 + (r1 * 8) + r2;\
+*reinterpret_cast<uint32_t*>(at) = o;\
+at += sizeof(uint32_t);
+
+
+// mov r1, ????????
+#define memapp_mov_r32_disp32(at, r1, value)\
+if (r1 == disassembler::R32_EAX)\
+    *at++ = 0xA1;\
+else\
+    *at++ = 0xB8 + r1;\
+*reinterpret_cast<uint32_t*>(at) = value;\
+at += sizeof(uint32_t);
+
+
+// lea r1, [????????]
+#define memapp_lea_r32_off32(at, r1, value)\
+*at++ = 0x8D;\
+*at++ = 0x05 + (r1 * 8);\
+*reinterpret_cast<uint32_t*>(at) = value;\
+at += sizeof(uint32_t);
+
+// mov [r1], ????????
+#define memapp_mov_rm_disp32(at, r1, value)\
+*at++ = 0xC7;\
+*at++ = r1;\
+*reinterpret_cast<uint32_t*>(at) = value;\
+at += sizeof(uint32_t);
+
+
+// mov [r1+??], ????????
+#define memapp_mov_rm_off8_disp32(at, r1, o, value)\
+*at++ = 0xC7;\
+*at++ = 0x40 + r1;\
+*at++ = o;\
+*reinterpret_cast<uint32_t*>(at) = value;\
+at += sizeof(uint32_t);
+
+
+// mov [????????], r1
+#define memapp_mov_off32_r32(at, r1, value)\
+if (r1 == EyeStep::R32_EAX)\
+	*at++ = 0xA3;\
+*reinterpret_cast<uint32_t*>(at) = value;\
+at += sizeof(uint32_t);
+
+
+// push ????????
+#define memapp_push_disp32(at, value)\
+*at++ = 0x68;\
+*reinterpret_cast<uint32_t*>(at) = value;\
+at += sizeof(uint32_t);
+
+
+// push ??
+#define memapp_push_disp8(at, value)\
+*at++ = 0x6A;\
+*at++ = value;
+
+
+// call loc_??????
+#define memapp_call(at, func, cleanup)\
+*at = 0xE8;\
+*reinterpret_cast<uint32_t*>(at + 1) = (reinterpret_cast<uint32_t>(func) - reinterpret_cast<uint32_t>(at)) - 5;\
+at += 5;\
+if (cleanup > 0) {\
+    *at++ = 0x83;\
+	*at++ = 0xC4;\
+	*at++ = cleanup;\
+}
+
+// jmp loc_??????
+#define memapp_jmp(at, func)\
+*at = 0xE9;\
+*reinterpret_cast<uint32_t*>(at + 1) = (reinterpret_cast<uint32_t>(func) - reinterpret_cast<uint32_t>(at)) - 5;\
+at += 5;
+
+
+// Usage/example:
+//
+// auto results = debug_register<R32_EBP>(r_lua_gettop, +8, 1);
+// auto r_lua_thread = results[0];
+// 
+template<int reg32>
+std::vector<uintptr_t> debug_register(uintptr_t address, int offset, size_t count)
+{
+    std::vector<uintptr_t> output = {};
+
+    void* new_func = VirtualAlloc(nullptr, 1024, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    uintptr_t ready = reinterpret_cast<uintptr_t>(new_func) + 128;
+    uintptr_t output_location = reinterpret_cast<uintptr_t>(new_func) + 132;
+
+    size_t hook_size = 0;
+
+    // figure out the stray bytes to NOP
+    while (hook_size < 5)
+    {
+        hook_size += disassembler::read(address + hook_size).len;
+    }
+
+    uint8_t* at = reinterpret_cast<uint8_t*>(new_func);
+    uint8_t* old_bytes = new uint8_t[hook_size];
+
+    memcpy(old_bytes, reinterpret_cast<void*>(address), hook_size);
+    memcpy(new_func, old_bytes, hook_size);
+
+    at += hook_size;
+
+    // Load ASM instructions to read out the local registers
+    // This is EXE-supported (coming soon), because
+    // we are manually writing the instructions
+    //
+
+    memapp_pushad(at)
+    memapp_push_r32(at, disassembler::R32_EDI)
+    memapp_push_r32(at, disassembler::R32_EAX)
+
+    for (int i = 0; i < count; i++)
+    {
+        // Place their values at our output location
+        memapp_lea_r32_off32(at, disassembler::R32_EDI, output_location + (i * 4))
+        memapp_mov_r32_rm_off32(at, disassembler::R32_EAX, reg32, offset + (i * 4))
+        memapp_mov_rm_r32(at, disassembler::R32_EDI, disassembler::R32_EAX);
+    }
+
+    memapp_mov_r32_disp32(at, disassembler::R32_EDI, ready)
+    memapp_mov_rm_disp32(at, disassembler::R32_EDI, 1)
+    memapp_pop_r32(at, disassembler::R32_EAX)
+    memapp_pop_r32(at, disassembler::R32_EDI)
+    memapp_popad(at)
+    memapp_jmp(at, reinterpret_cast<void*>(address + hook_size))
+
+    saved_detour detour_data = create_detour(address, new_func);
+    
+    while (*reinterpret_cast<int*>(ready) != 1)
+    {
+        Sleep(10);
+    }
+
+    remote_detour(detour_data);
+
+    for (int i = 0; i < count; i++)
+    {
+        // add output values to the list
+        output.push_back(*reinterpret_cast<int*>(output_location + i * 4));
+    }
+
+    VirtualFree(new_func, 0, MEM_RELEASE);
+
+    return output;
+};
