@@ -1,3 +1,6 @@
+// memedit.hpp - goal:
+// declare most of the api that isn't associated with a template
+//
 #include "memedit.hpp"
 
 bool is_function(uintptr_t address)
@@ -280,3 +283,50 @@ bool memcmp(uintptr_t address, const std::vector<uint8_t>& bytes)
 {
     return memcmp(reinterpret_cast<void*>(address), bytes);
 }
+
+
+// Give our detouring functions a body
+// 
+
+saved_detour create_detour(uintptr_t address, void* func)
+{
+    size_t hook_size = 0;
+
+    while (hook_size < 5) {
+        hook_size += disassembler::read(address + hook_size).len;
+    }
+
+    saved_detour detour_data;
+    detour_data.address = address;
+    detour_data.hook_size = hook_size;
+    memcpy(&detour_data.old_bytes, reinterpret_cast<void*>(detour_data.address), hook_size);
+
+    DWORD old_protect;
+    VirtualProtect(reinterpret_cast<void*>(detour_data.address), hook_size, PAGE_EXECUTE_READWRITE, &old_protect);
+
+    *reinterpret_cast<uint8_t*>(detour_data.address) = 0xE9;
+    *reinterpret_cast<uint32_t*>(detour_data.address + 1) = (reinterpret_cast<uint32_t>(func) - detour_data.address) - 5;
+
+    for (int i = 5; i < hook_size; i++)
+    {
+        *reinterpret_cast<uint8_t*>(detour_data.address + i) = 0x90;
+    }
+
+    VirtualProtect(reinterpret_cast<void*>(detour_data.address), hook_size, old_protect, &old_protect);
+
+    return detour_data;
+}
+
+void remote_detour(saved_detour detour_data)
+{
+    DWORD old_protect;
+    VirtualProtect(reinterpret_cast<void*>(detour_data.address), detour_data.hook_size, PAGE_EXECUTE_READWRITE, &old_protect);
+
+    for (int i = 0; i < detour_data.hook_size; i++)
+    {
+        *reinterpret_cast<uint8_t*>(detour_data.address + i) = detour_data.old_bytes[i];
+    }
+
+    VirtualProtect(reinterpret_cast<void*>(detour_data.address), detour_data.hook_size, old_protect, &old_protect);
+}
+
